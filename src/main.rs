@@ -63,10 +63,17 @@ fn main() {
     for (index, value) in (&mut conv_matrix).into_iter().enumerate() {
         let x: f64 = (index % DIMS.0) as f64;
         let y: f64 = (index / DIMS.0) as f64;
+        let rad: f64 = distance((x, y), (DIMS.0 as f64 / 2.0, DIMS.1 as f64 / 2.0));
+
+        //https://www.desmos.com/calculator/f2cofzioy0
+        let inner_ring: f64 = -((4.0 - (rad / 10.0)).exp()) + 5.0;
+        let bounding_ring: f64 = 1.0 / (1.0 + (-10.0 + (rad / 5.0)).exp());
         *value = Complex::new(
             // MODIFY THIS LINE vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
             // the argument to the final powf is hwo strong the effect will be
-            distance((x, y), (DIMS.0 as f64 / 2.0, DIMS.1 as f64 / 2.0)).powf(30.0),
+            inner_ring * bounding_ring,
+            //20.0 - ((rad / 16.0) - 10.0).powi(2),
+            // (if (distance((x, y), (DIMS.0 as f64 / 2.0, DIMS.1 as f64 / 2.0)) < 10.0) { -20.0 } else { 1.0 }),
             // MODIFY THE ABOVE LINE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             0.0
         );
@@ -95,7 +102,7 @@ fn main() {
                     for _ in 0..1000 {
                         let random_x = rand::thread_rng().gen_range(0, DIMS.0 as i32);
                         let random_y = rand::thread_rng().gen_range(0, DIMS.1 as i32);
-                        let single_point = ((random_x, random_y), fft_render_buffer[(random_x + (random_y * DIMS.0 as i32)) as usize].norm());
+                        let single_point = ((random_x, random_y), fft_render_buffer[(random_x + (random_y * DIMS.0 as i32)) as usize].re);
                         point_sample.push(single_point);
                     }
                     let sample_sum: f64 = point_sample.iter().fold(0.0, |acc, x| acc + x.1);
@@ -165,7 +172,8 @@ fn main() {
             // copy the fft_render_buffer to the window's canvas streaming texture
             streaming_tex.with_lock(None, |buffer: &mut [u8], _pitch: usize| {
                 for (index, value) in (&fft_render_buffer).into_iter().enumerate() {
-                    let amplitude: f64 = value.norm().floor(); // 0 to max_value
+                    let amplitude: f64 = value.re.floor(); // 0 to max_value
+                    //let brightness: f64 = if amplitude > 0.0 { 256.0 * amplitude / max_value } else { 0.0 }; // 0 to 255
                     let brightness: f64 = 256.0 * amplitude / max_value; // 0 to 255
                     /*
                     let rgb: (f64, f64, f64) = radians_to_rgb(value.arg()); // all elements are 0 to 1
