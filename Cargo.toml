@@ -7,3 +7,4 @@ authors = ["Tyler L <tslimkemann42@gmail.com>"]
 sdl2 = "0.31.0"
 rustfft = "2.0.0"
 num = "0.1.42"
+rand = "0.5.3"
